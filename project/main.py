@@ -7,6 +7,11 @@ from D_Analysis import *
 from E_Setting import *
 from F_Exit import *
 from Parent import *
+import db
+import time
+
+# 데이터베이스 연결
+conn = db.create_connection()
 
 # 초기화
 pygame.init()

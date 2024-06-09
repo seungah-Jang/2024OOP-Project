@@ -1,6 +1,15 @@
 import pygame
 from Parent import *
 import sys
+from datetime import datetime
+import db
+import time
+
+# 데이터베이스 연결
+conn = db.create_connection()
+
+
+
 class Program(Screen):
     def draw(self):
         self.screen.fill(WHITE)
@@ -8,6 +17,12 @@ class Program(Screen):
         pygame.display.update()
 class Play:
     def run(self):
+        correct_cnt = 0
+        current = datetime.now()
+        session_start_time = current.strftime("%Y-%m-%d %H:%M:%S")
+        sTime = time.time() 
+        key_data = {}
+        total_keystrokes = 0
         # 초기화
         pygame.init()
 
@@ -107,10 +122,32 @@ class Play:
                         if input_len <= len(sentence_ll):
                             if current_char == sentence_ll[input_len-1]: #같으면 검은색 (0)
                                 color_text[input_len-1] = 0
+                                correct_cnt += 1
                             else:
                                 color_text[input_len-1] = 2
+            tmp_total_keystrokes = len(typed_text)
+            tmp_correct_cnt = correct_cnt
+            tmp_elapsed_time = (time.time()-sTime)/60
+
+            if tmp_total_keystrokes==0:
+                real_accuracy = 0
+            else:
+                real_accuracy = (tmp_correct_cnt/tmp_total_keystrokes)*100
+            real_wpm = (tmp_total_keystrokes/5)/tmp_elapsed_time
+            
+            # 하단 좌측에 출력할 텍스트 좌표
+            left_bottom_x = 20
+            left_bottom_y = screen.get_height() - 40  
+
+            # 하단 우측에 출력할 텍스트 좌표
+            right_bottom_x = screen.get_width() - 200  
+            right_bottom_y = screen.get_height() - 40  
+
+            
+  
 
             if len(typed_text) == len(sentence)+1:
+                total_keystrokes = len(typed_text)
                 finished = True
                 print("True")
             
@@ -125,7 +162,15 @@ class Play:
                 running = False  # 프로그램 종료
             # 화면 그리기
             screen.fill(WHITE)
-            
+            # Real Accuracy 텍스트 생성
+            accuracy_text = font.render("Real Accuracy: {:.2f}%".format(real_accuracy), True, BLACK)
+            # Real Accuracy 텍스트 화면에 표시 (하단 좌측)
+            screen.blit(accuracy_text, (left_bottom_x, left_bottom_y))
+
+            # Real WPM 텍스트 생성
+            wpm_text = font.render("Real WPM: {:.2f}".format(real_wpm), True, BLACK)
+            # Real WPM 텍스트 화면에 표시 (하단 우측)
+            screen.blit(wpm_text, (right_bottom_x, right_bottom_y))
             
 
             x_offset = 50
@@ -171,7 +216,13 @@ class Play:
 
             # 화면 업데이트
             pygame.display.flip()
-        
+        elapsed_time = (time.time() - sTime)/60
+        accuracy = (correct_cnt/total_keystrokes)*100
+        wpm = (total_keystrokes/5)/elapsed_time
+        print(session_start_time, total_keystrokes, correct_cnt,elapsed_time,accuracy,wpm)
+        ## DB에 insert 할것.
+
+
         return "main_screen"
         # 종료
         #pygame.quit()
